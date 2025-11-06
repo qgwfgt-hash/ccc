@@ -1,119 +1,237 @@
-# Telegram Temporary Email Bot 📧
+# 📧 Advanced Telegram Temp Mail Bot
 
-A Telegram bot that allows users to create temporary email addresses and receive emails directly through Telegram.
+Ekta powerful Telegram bot jekhane apni temporary email address create korte parben **TempMail.plus** use kore.
 
-## Features ✨
+## ✨ Features
 
-- 🎲 Generate random temporary email addresses
-- 📬 Check inbox for received emails
-- 📖 Read full email content
-- 🔄 Auto-refresh inbox
-- 🎨 Beautiful inline keyboard interface
-- 🆓 Free - uses 1secmail.com API (no API key required)
+### 🎯 Main Features:
+- ✅ **Custom Email Create** - Nijer moto username diye email banano
+- ✅ **Multiple Domains** - 10+ domain theke choose korte parben
+- ✅ **Code Detection** - OTP/Verification code automatically detect kore
+- ✅ **Real-time Inbox** - Instantly email receive hobe
+- ✅ **Beautiful Interface** - Clean and easy to use buttons
+- ✅ **Powered by TempMail.plus** - Reliable service
 
-## Setup 🚀
+### 🔑 Code Detection Features:
+- Automatically detect 4-8 digit codes
+- Detect alphanumeric codes (ABC123)
+- Detect codes with dashes (123-456)
+- Show codes separately with one click
+- Highlight emails with codes
 
-### 1. Get a Telegram Bot Token
+## 🚀 Setup Korte
 
-1. Open Telegram and search for [@BotFather](https://t.me/botfather)
-2. Send `/newbot` command
-3. Follow the instructions to create your bot
-4. Copy the bot token you receive
+### 1. Bot Token Paan
 
-### 2. Install Dependencies
+1. Telegram e jayen
+2. `@BotFather` search koren
+3. `/newbot` command send koren
+4. Instructions follow koren
+5. Token copy koren
+
+### 2. Dependencies Install Koren
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Run the Bot
+### 3. Bot Run Koren
 
 ```bash
 python bot.py
 ```
 
-When prompted, paste your bot token.
+Token paste koren jokhn asked hobe.
 
-## Usage 📱
+## 📱 Kivabe Use Korben
 
-### Commands
+### Commands:
 
-- `/start` - Start the bot and see welcome message
-- `/generate` - Generate a new temporary email address
-- `/inbox` - Check your inbox for new emails
-- `/email` - Display your current email address
-- `/new` - Generate a new email (replaces current one)
-- `/help` - Show help message
+```
+/start      - Bot start koren
+/create     - Custom email create (nijer username)
+/random     - Random email instantly
+/inbox      - Inbox check koren
+/email      - Current email dekhun
+/codes      - Sob codes extract koren
+/domains    - Available domains dekhun
+/help       - Help message
+```
 
-### How to Use
+### Step by Step Guide:
 
-1. Start the bot with `/start`
-2. Generate a temporary email with `/generate`
-3. Use the email address wherever you need
-4. Check `/inbox` to see received emails
-5. Click on any email to read its full content
+#### 1️⃣ Custom Email Create:
 
-## Features in Detail 🔍
+```
+/create → Domain select → Username send → Email ready!
+```
 
-### Generate Email
-Creates a random temporary email address using various domains:
-- 1secmail.com
-- 1secmail.org
-- 1secmail.net
-- esiix.com
-- wwjmp.com
+**Example:**
+- Command: `/create`
+- Select domain: `@tempmail.plus`
+- Send username: `myemail123`
+- Result: `myemail123@tempmail.plus` ✅
 
-### Check Inbox
-Shows all received emails with:
-- Sender address
-- Subject line
-- Date/time received
-- Quick read buttons
+#### 2️⃣ Random Email (Quick):
 
-### Read Emails
-View full email content including:
-- Complete headers
-- Text body
-- HTML body (if available)
+```
+/random → Instantly email ready!
+```
 
-## Technical Details ⚙️
+#### 3️⃣ Check Inbox:
 
-- **API**: Uses [1secmail.com](https://www.1secmail.com/) free API
+```
+/inbox → Sob emails dekhun → Click to read
+```
+
+#### 4️⃣ Extract Codes:
+
+```
+/codes → Automatically sob OTP/codes show hobe
+```
+
+## 🌐 Available Domains
+
+- tempmail.plus
+- mailto.plus
+- bumbarash.com
+- easytrashmail.com
+- fthcapital.com
+- clipmail.eu
+- tmail.plus
+- disbox.org
+- mail.tm
+- guerrillamail.com
+
+## 🔑 Code Detection Examples
+
+Bot automatically detect korbe:
+
+```
+✅ 123456        (6 digit OTP)
+✅ 1234          (4 digit code)
+✅ ABC123XYZ     (Alphanumeric)
+✅ 123-456       (Code with dash)
+✅ 12345678      (8 digit code)
+```
+
+## 📋 Features in Detail
+
+### Custom Email Creation
+- Apnar choice er username
+- 10+ domain theke select
+- Username rules:
+  - 3-20 characters
+  - Letters, numbers, dots, dashes allowed
+  - No spaces
+
+### Auto Code Detection
+- Email receive korle automatically code detect
+- `/codes` command e sob codes eksathe
+- Email list e 🔑 icon jodi code thake
+- Email read korle codes highlight hobe
+
+### Real-time Updates
+- Instant email receive
+- Refresh button diye update
+- Fast API response
+- No delay
+
+## 🛠️ Technical Details
+
+- **API**: TempMail.plus
 - **Framework**: python-telegram-bot 20.7
-- **Storage**: In-memory (for production, use a database)
 - **Language**: Python 3.7+
+- **Dependencies**: requests, python-telegram-bot
 
-## Limitations ⚠️
+## ⚠️ Important Notes
 
-- Emails are temporary and expire after some time
-- Storage is in-memory (restarts clear all data)
-- Maximum 10 emails shown per inbox view
-- Email content truncated to 3000 characters for readability
+1. **Temporary Emails**: Emails temporary, kichu time por expire hobe
+2. **Privacy**: Sensitive information send korben na
+3. **Storage**: In-memory storage (restart e clear)
+4. **Codes**: Automatically detect hobe common formats
 
-## Privacy 🔒
+## 🎨 Bot Interface
 
-- No email data is permanently stored
-- No user data is collected
-- All emails are handled through public temporary email API
-- Use responsibly and don't use for sensitive communications
+### Inline Buttons:
+- 📬 Check Inbox - Inbox dekhun
+- 🔄 New Email - Notun email
+- 🔑 Extract Codes - Codes ber koren
+- 📖 Read Email - Email poren
+- ◀️ Back - Pichone jan
 
-## Future Enhancements 🎯
+### Auto Features:
+- Code detection with 🔑 icon
+- Email counter
+- Subject preview
+- From address display
 
-- [ ] Database integration for persistent storage
-- [ ] Support for multiple email addresses per user
-- [ ] Email notifications when new mail arrives
+## 💡 Use Cases
+
+✅ Social media signup
+✅ Website testing
+✅ OTP receive
+✅ Temporary registration
+✅ Newsletter subscription
+✅ Service testing
+✅ Privacy protection
+
+## 🔒 Security & Privacy
+
+- No personal data stored
+- Temporary emails only
+- API calls encrypted
+- No database needed
+- All data in-memory
+
+## 🚀 Advanced Features
+
+### Batch Operations:
+- Check multiple emails at once
+- Extract all codes together
+- Refresh inbox quickly
+
+### Smart Detection:
+- Auto detect verification codes
+- Highlight code emails
+- Quick code access
+
+### User Friendly:
+- Simple commands
+- Clear instructions
+- Beautiful interface
+- Fast response
+
+## 📞 Support
+
+Issues ba questions hole:
+- GitHub issues create koren
+- Code review koren
+- Documentation poren
+
+## 🎯 Future Plans
+
+- [ ] Database integration
+- [ ] Multiple email support
+- [ ] Email notifications
 - [ ] Attachment support
-- [ ] Email search functionality
-- [ ] Custom email username selection
+- [ ] Email search
+- [ ] Custom domain addition
+- [ ] Email forwarding
+- [ ] Auto-delete old emails
 
-## License 📄
+## 📄 License
 
-Free to use and modify. No warranty provided.
+Free to use and modify. Educational purposes only.
 
-## Support 💬
+## ⭐ Credits
 
-For issues or questions, please create an issue in the repository.
+- TempMail.plus API
+- python-telegram-bot
+- Telegram Bot API
 
 ---
 
-**Note**: This bot uses temporary email services. Don't use these emails for important or sensitive communications!
+**🎉 Enjoy using the bot!**
+
+*Remember: Only use for temporary purposes, not for sensitive data!*
