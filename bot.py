@@ -168,17 +168,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "• Auto-detect verification codes/OTP\n"
         "• Real-time email updates\n"
         "• Powered by TempMail.plus\n\n"
-        "*Commands:*\n"
-        "/create - Create custom email\n"
-        "/random - Generate random email\n"
-        "/inbox - Check inbox\n"
-        "/email - Show current email\n"
-        "/codes - Extract codes from emails\n"
-        "/help - Show help\n\n"
-        "👉 Start with /create or /random"
+        "👇 Choose an option below:"
     )
     
-    await update.message.reply_text(welcome_message, parse_mode='Markdown')
+    keyboard = [
+        [InlineKeyboardButton("🎨 Create Custom Email", callback_data='create_email')],
+        [InlineKeyboardButton("🎲 Random Email", callback_data='random_email')],
+        [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')],
+        [InlineKeyboardButton("📧 Show My Email", callback_data='show_email')],
+        [InlineKeyboardButton("🔑 Extract Codes", callback_data='extract_codes')],
+        [InlineKeyboardButton("📋 Available Domains", callback_data='show_domains')],
+        [InlineKeyboardButton("❓ Help", callback_data='show_help')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await update.message.reply_text(welcome_message, parse_mode='Markdown', reply_markup=reply_markup)
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -268,7 +272,8 @@ async def generate_random_email(update: Update, context: ContextTypes.DEFAULT_TY
         keyboard = [
             [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')],
             [InlineKeyboardButton("🔄 New Random Email", callback_data='random_email')],
-            [InlineKeyboardButton("🔑 Extract Codes", callback_data='extract_codes')]
+            [InlineKeyboardButton("🔑 Extract Codes", callback_data='extract_codes')],
+            [InlineKeyboardButton("◀️ Main Menu", callback_data='back_to_menu')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
@@ -371,6 +376,7 @@ async def check_inbox(update: Update, context: ContextTypes.DEFAULT_TYPE):
         InlineKeyboardButton("🔄 Refresh", callback_data='check_inbox'),
         InlineKeyboardButton("🔑 Get Codes", callback_data='extract_codes')
     ])
+    keyboard.append([InlineKeyboardButton("◀️ Main Menu", callback_data='back_to_menu')])
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     await status_msg.edit_text(message, reply_markup=reply_markup)
@@ -431,7 +437,11 @@ async def extract_all_codes(update: Update, context: ContextTypes.DEFAULT_TYPE):
             message += f"{code} | "
         message += "\n\n"
     
-    keyboard = [[InlineKeyboardButton("🔄 Refresh Codes", callback_data='extract_codes')]]
+    keyboard = [
+        [InlineKeyboardButton("🔄 Refresh Codes", callback_data='extract_codes')],
+        [InlineKeyboardButton("📬 Back to Inbox", callback_data='check_inbox')],
+        [InlineKeyboardButton("◀️ Main Menu", callback_data='back_to_menu')]
+    ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await status_msg.edit_text(message, reply_markup=reply_markup)
@@ -469,7 +479,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             keyboard = [
                 [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')],
                 [InlineKeyboardButton("🔑 Extract Codes", callback_data='extract_codes')],
-                [InlineKeyboardButton("🔄 New Email", callback_data='random_email')]
+                [InlineKeyboardButton("🔄 New Email", callback_data='random_email')],
+                [InlineKeyboardButton("◀️ Main Menu", callback_data='back_to_menu')]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             
@@ -493,7 +504,123 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     data = query.data
     
-    if data.startswith('domain_'):
+    if data == 'create_email':
+        # Show domain selection
+        domains = api.get_domains()
+        keyboard = []
+        
+        for domain in domains[:10]:
+            keyboard.append([InlineKeyboardButton(f"@{domain}", callback_data=f"domain_{domain}")])
+        
+        keyboard.append([InlineKeyboardButton("◀️ Back to Menu", callback_data='back_to_menu')])
+        
+        message = (
+            "🎨 *Create Custom Email*\n\n"
+            "Step 1: Choose a domain below\n"
+            "Step 2: Send your desired username\n\n"
+            "Select domain:"
+        )
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(message, parse_mode='Markdown', reply_markup=reply_markup)
+    
+    elif data == 'show_email':
+        # Show current email
+        if user_id not in user_data or 'email' not in user_data[user_id]:
+            keyboard = [
+                [InlineKeyboardButton("🎨 Create Email", callback_data='create_email')],
+                [InlineKeyboardButton("🎲 Random Email", callback_data='random_email')],
+                [InlineKeyboardButton("◀️ Back to Menu", callback_data='back_to_menu')]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await query.edit_message_text(
+                "❌ No email found!\n\nCreate one using the buttons below:",
+                reply_markup=reply_markup
+            )
+            return
+        
+        email = user_data[user_id]['email']
+        
+        keyboard = [
+            [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')],
+            [InlineKeyboardButton("🔑 Extract Codes", callback_data='extract_codes')],
+            [InlineKeyboardButton("🔄 New Email", callback_data='random_email')],
+            [InlineKeyboardButton("◀️ Back to Menu", callback_data='back_to_menu')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        message = f"📧 *Your Current Email:*\n\n`{email}`\n\n✅ Active and ready to receive"
+        await query.edit_message_text(message, parse_mode='Markdown', reply_markup=reply_markup)
+    
+    elif data == 'show_domains':
+        # Show available domains
+        domains = api.get_domains()
+        
+        message = "*📋 Available Domains:*\n\n"
+        for idx, domain in enumerate(domains, 1):
+            message += f"{idx}. `{domain}`\n"
+        
+        message += "\n💡 Use 'Create Custom Email' to make your email!"
+        
+        keyboard = [
+            [InlineKeyboardButton("🎨 Create Email", callback_data='create_email')],
+            [InlineKeyboardButton("◀️ Back to Menu", callback_data='back_to_menu')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(message, parse_mode='Markdown', reply_markup=reply_markup)
+    
+    elif data == 'show_help':
+        # Show help message
+        help_text = (
+            "*📧 Temp Mail Bot - Help*\n\n"
+            "*Features:*\n"
+            "✅ Custom usernames\n"
+            "✅ Multiple domains\n"
+            "✅ Auto code detection\n"
+            "✅ Real-time updates\n\n"
+            "*How to use:*\n"
+            "1️⃣ Click 'Create Custom Email'\n"
+            "2️⃣ Select a domain\n"
+            "3️⃣ Send your username\n"
+            "4️⃣ Use the email anywhere\n"
+            "5️⃣ Check inbox for emails\n"
+            "6️⃣ Codes auto-detected\n\n"
+            "⚡ Powered by TempMail.plus"
+        )
+        
+        keyboard = [[InlineKeyboardButton("◀️ Back to Menu", callback_data='back_to_menu')]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(help_text, parse_mode='Markdown', reply_markup=reply_markup)
+    
+    elif data == 'back_to_menu':
+        # Back to main menu
+        welcome_message = (
+            "🎉 *Welcome to Advanced Temp Mail Bot!*\n\n"
+            "✨ Features:\n"
+            "• Generate custom email addresses\n"
+            "• Choose from multiple domains\n"
+            "• Auto-detect verification codes/OTP\n"
+            "• Real-time email updates\n"
+            "• Powered by TempMail.plus\n\n"
+            "👇 Choose an option below:"
+        )
+        
+        keyboard = [
+            [InlineKeyboardButton("🎨 Create Custom Email", callback_data='create_email')],
+            [InlineKeyboardButton("🎲 Random Email", callback_data='random_email')],
+            [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')],
+            [InlineKeyboardButton("📧 Show My Email", callback_data='show_email')],
+            [InlineKeyboardButton("🔑 Extract Codes", callback_data='extract_codes')],
+            [InlineKeyboardButton("📋 Available Domains", callback_data='show_domains')],
+            [InlineKeyboardButton("❓ Help", callback_data='show_help')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(welcome_message, parse_mode='Markdown', reply_markup=reply_markup)
+    
+    elif data.startswith('domain_'):
         domain = data.replace('domain_', '')
         user_data[user_id] = {'pending_domain': domain}
         
@@ -557,6 +684,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             InlineKeyboardButton("🔄 Refresh", callback_data='check_inbox'),
             InlineKeyboardButton("🔑 Get Codes", callback_data='extract_codes')
         ])
+        keyboard.append([InlineKeyboardButton("◀️ Main Menu", callback_data='back_to_menu')])
         
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(message, reply_markup=reply_markup)
@@ -579,7 +707,8 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             keyboard = [
                 [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')],
                 [InlineKeyboardButton("🔄 New Random", callback_data='random_email')],
-                [InlineKeyboardButton("🔑 Extract Codes", callback_data='extract_codes')]
+                [InlineKeyboardButton("🔑 Extract Codes", callback_data='extract_codes')],
+                [InlineKeyboardButton("◀️ Main Menu", callback_data='back_to_menu')]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             
@@ -650,7 +779,8 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         keyboard = [
             [InlineKeyboardButton("🔄 Refresh", callback_data='extract_codes')],
-            [InlineKeyboardButton("◀️ Back to Inbox", callback_data='check_inbox')]
+            [InlineKeyboardButton("📬 Back to Inbox", callback_data='check_inbox')],
+            [InlineKeyboardButton("◀️ Main Menu", callback_data='back_to_menu')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
@@ -702,7 +832,10 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         message += f"\n━━━━━━━━━━━━━\n\n{body}"
         
-        keyboard = [[InlineKeyboardButton("◀️ Back to Inbox", callback_data='check_inbox')]]
+        keyboard = [
+            [InlineKeyboardButton("◀️ Back to Inbox", callback_data='check_inbox')],
+            [InlineKeyboardButton("🏠 Main Menu", callback_data='back_to_menu')]
+        ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
         await query.edit_message_text(message, reply_markup=reply_markup)
