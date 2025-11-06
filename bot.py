@@ -9,9 +9,7 @@ import logging
 import re
 import requests
 import json
-import os
 from datetime import datetime
-from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application,
@@ -21,9 +19,6 @@ from telegram.ext import (
     filters,
     ContextTypes,
 )
-
-# Load environment variables
-load_dotenv()
 
 # Enable logging
 logging.basicConfig(
@@ -936,31 +931,17 @@ def main():
     print("=" * 60)
     print("  TELEGRAM TEMP MAIL BOT - POWERED BY TEMPMAIL.PLUS")
     print("=" * 60)
+    print("\n🔧 Setup Instructions:")
+    print("1. Get bot token from @BotFather on Telegram")
+    print("2. Send /newbot to @BotFather")
+    print("3. Follow instructions and copy the token")
+    print("=" * 60)
     
-    # Try to load token from .env file
-    token = os.getenv('BOT_TOKEN')
+    token = input("\n🔑 Enter your bot token: ").strip()
     
-    if not token or token == 'YOUR_BOT_TOKEN_HERE':
-        print("\n🔧 Setup Instructions:")
-        print("1. Get bot token from @BotFather on Telegram")
-        print("2. Send /newbot to @BotFather")
-        print("3. Follow instructions and copy the token")
-        print("=" * 60)
-        
-        token = input("\n🔑 Enter your bot token: ").strip()
-        
-        if not token:
-            print("❌ No token provided!")
-            return
-        
-        # Save to .env file
-        with open('.env', 'w') as f:
-            f.write(f"# Telegram Bot Token\n")
-            f.write(f"# Get from @BotFather\n")
-            f.write(f"BOT_TOKEN={token}\n")
-        print("✅ Token saved to .env file!")
-    else:
-        print(f"✅ Loaded token from .env file")
+    if not token:
+        print("❌ No token provided!")
+        return
     
     print("\n🚀 Starting bot...")
     print("✅ Bot is running! Press Ctrl+C to stop.")

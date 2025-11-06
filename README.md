@@ -39,20 +39,7 @@ pip install -r requirements.txt
 4. Instructions follow koren
 5. Token copy koren
 
-### 3. Setup Token
-
-**Option 1: .env File (Recommended)**
-
-`.env` file create koren:
-```env
-BOT_TOKEN=your_bot_token_here
-```
-
-**Option 2: First Run**
-
-Bot run koren, prompt ashle token paste koren. Automatically `.env` file e save hobe.
-
-### 4. Run Bot
+### 3. Run Bot & Enter Token
 
 ```bash
 python bot.py
@@ -165,8 +152,6 @@ job_queue.run_repeating(check_new_emails, interval=30, first=10)
 /workspace/
 ├── bot.py              # Main bot code
 ├── requirements.txt    # Dependencies
-├── .env               # Bot token (your file)
-├── .env.example       # Example env file
 ├── .gitignore         # Git ignore
 └── README.md          # This file
 ```
@@ -177,22 +162,20 @@ job_queue.run_repeating(check_new_emails, interval=30, first=10)
 - ⚠️ Don't use for sensitive data
 - ✅ No personal data stored
 - ✅ In-memory storage (clears on restart)
-- ✅ Bot token in .env (not committed)
+- ✅ Bot token entered in terminal (not saved)
 
 ## ⚡ Quick Start
 
 ```bash
-# 1. Clone/download
-# 2. Install dependencies
+# 1. Install dependencies
 pip install -r requirements.txt
 
-# 3. Create .env file
-echo "BOT_TOKEN=your_token_here" > .env
-
-# 4. Run bot
+# 2. Run bot
 python bot.py
 
-# 5. Telegram e /start
+# 3. Terminal e token paste koren when prompted
+
+# 4. Telegram e /start
 ```
 
 ## 🎯 Use Cases
@@ -214,7 +197,7 @@ python bot.py
 | Code Detection | ✅ |
 | Background Monitoring | ✅ |
 | Single Domain (@any.pink) | ✅ |
-| Token from .env | ✅ |
+| Terminal Token Input | ✅ |
 | Simple 4-Button UI | ✅ |
 | Real-time Updates | ✅ |
 
@@ -222,8 +205,8 @@ python bot.py
 
 ### Bot not starting?
 ```bash
-# Check token in .env
-cat .env
+# Make sure you entered correct token
+# Get new token from @BotFather if needed
 
 # Reinstall dependencies
 pip install -r requirements.txt --upgrade
@@ -247,7 +230,7 @@ pip install -r requirements.txt --upgrade
 - [x] 1-click copy functionality
 - [x] Code detection & extraction
 - [x] Background monitoring
-- [x] .env token support
+- [x] Terminal token input
 
 ### Future Plans:
 - [ ] Database integration
