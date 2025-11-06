@@ -150,7 +150,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     
     welcome_message = (
-        "🎉 *Welcome to Temp Mail Bot!*\n\n"
+        "🎉 Welcome to Temp Mail Bot!\n\n"
         "✨ Create temporary email instantly\n"
         "📧 Domain: @any.pink\n"
         "🔑 Auto-detect verification codes\n\n"
@@ -165,7 +165,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await update.message.reply_text(welcome_message, parse_mode='Markdown', reply_markup=reply_markup)
+    await update.message.reply_text(welcome_message, reply_markup=reply_markup)
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -219,13 +219,13 @@ async def create_custom_email(update: Update, context: ContextTypes.DEFAULT_TYPE
     user_data[user_id] = {'pending_domain': 'any.pink'}
     
     message = (
-        "🎨 *Create Your Email*\n\n"
+        "🎨 Create Your Email\n\n"
         "📧 Domain: @any.pink\n\n"
         "Now send your desired username:\n\n"
         "📝 Rules:\n"
-        "• 3-20 characters\n"
+        "• 3 to 20 characters\n"
         "• Letters, numbers allowed\n"
-        "• Can use: . _ -\n"
+        "• Can use dots, underscores, dashes\n"
         "• No spaces\n\n"
         "💡 Example: myname123\n"
         "Result: myname123@any.pink"
@@ -233,7 +233,7 @@ async def create_custom_email(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     keyboard = [[InlineKeyboardButton("◀️ Main Menu", callback_data='back_to_menu')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(message, parse_mode='Markdown', reply_markup=reply_markup)
+    await update.message.reply_text(message, reply_markup=reply_markup)
 
 
 async def generate_random_email(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -263,14 +263,14 @@ async def generate_random_email(update: Update, context: ContextTypes.DEFAULT_TY
         reply_markup = InlineKeyboardMarkup(keyboard)
         
         message = (
-            f"✅ *Email Created Successfully!*\n\n"
-            f"📧 *Your Email:*\n`{email}`\n\n"
+            f"✅ Email Created Successfully!\n\n"
+            f"📧 Your Email:\n{email}\n\n"
             f"📋 Tap to copy\n"
             f"📬 Check inbox using button below\n"
             f"🔑 Codes will be auto-detected"
         )
         
-        await status_msg.edit_text(message, parse_mode='Markdown', reply_markup=reply_markup)
+        await status_msg.edit_text(message, reply_markup=reply_markup)
     else:
         await status_msg.edit_text("❌ Failed to create email. Try again!")
 
@@ -291,17 +291,18 @@ async def show_current_email(update: Update, context: ContextTypes.DEFAULT_TYPE)
     keyboard = [
         [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')],
         [InlineKeyboardButton("🔑 Extract Codes", callback_data='extract_codes')],
-        [InlineKeyboardButton("🔄 New Email", callback_data='random_email')]
+        [InlineKeyboardButton("🔄 New Email", callback_data='create_email')],
+        [InlineKeyboardButton("◀️ Main Menu", callback_data='back_to_menu')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     message = (
-        f"📧 *Your Current Email:*\n\n"
-        f"`{email}`\n\n"
+        f"📧 Your Current Email:\n\n"
+        f"{email}\n\n"
         f"✅ Active and ready to receive"
     )
     
-    await update.message.reply_text(message, parse_mode='Markdown', reply_markup=reply_markup)
+    await update.message.reply_text(message, reply_markup=reply_markup)
 
 
 async def check_inbox(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -325,10 +326,9 @@ async def check_inbox(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = InlineKeyboardMarkup(keyboard)
         
         await status_msg.edit_text(
-            f"📭 *Inbox Empty*\n\n"
-            f"Email: `{email}`\n\n"
+            f"📭 Inbox Empty\n\n"
+            f"Email: {email}\n\n"
             f"Waiting for emails...",
-            parse_mode='Markdown',
             reply_markup=reply_markup
         )
         return
@@ -470,13 +470,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup = InlineKeyboardMarkup(keyboard)
             
             message = (
-                f"✅ *Custom Email Created!*\n\n"
-                f"📧 *Your Email:*\n`{email}`\n\n"
+                f"✅ Custom Email Created!\n\n"
+                f"📧 Your Email:\n{email}\n\n"
                 f"📋 Tap to copy\n"
                 f"📬 Ready to receive emails"
             )
             
-            await status_msg.edit_text(message, parse_mode='Markdown', reply_markup=reply_markup)
+            await status_msg.edit_text(message, reply_markup=reply_markup)
         else:
             await status_msg.edit_text("❌ Failed to create email. Try different username!")
 
@@ -494,13 +494,13 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_data[user_id] = {'pending_domain': 'any.pink'}
         
         message = (
-            "🎨 *Create Your Email*\n\n"
+            "🎨 Create Your Email\n\n"
             "📧 Domain: @any.pink\n\n"
             "Now send your desired username:\n\n"
             "📝 Rules:\n"
-            "• 3-20 characters\n"
+            "• 3 to 20 characters\n"
             "• Letters, numbers allowed\n"
-            "• Can use: . _ -\n"
+            "• Can use dots, underscores, dashes\n"
             "• No spaces\n\n"
             "💡 Example: myname123\n"
             "Result: myname123@any.pink"
@@ -509,7 +509,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = [[InlineKeyboardButton("◀️ Back to Menu", callback_data='back_to_menu')]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        await query.edit_message_text(message, parse_mode='Markdown', reply_markup=reply_markup)
+        await query.edit_message_text(message, reply_markup=reply_markup)
     
     elif data == 'show_email':
         # Show current email
@@ -531,13 +531,13 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = [
             [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')],
             [InlineKeyboardButton("🔑 Extract Codes", callback_data='extract_codes')],
-            [InlineKeyboardButton("🔄 New Email", callback_data='random_email')],
+            [InlineKeyboardButton("🔄 New Email", callback_data='create_email')],
             [InlineKeyboardButton("◀️ Back to Menu", callback_data='back_to_menu')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        message = f"📧 *Your Current Email:*\n\n`{email}`\n\n✅ Active and ready to receive"
-        await query.edit_message_text(message, parse_mode='Markdown', reply_markup=reply_markup)
+        message = f"📧 Your Current Email:\n\n{email}\n\n✅ Active and ready to receive"
+        await query.edit_message_text(message, reply_markup=reply_markup)
     
     elif data == 'show_domains':
         # Show available domains
@@ -584,7 +584,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == 'back_to_menu':
         # Back to main menu
         welcome_message = (
-            "🎉 *Welcome to Temp Mail Bot!*\n\n"
+            "🎉 Welcome to Temp Mail Bot!\n\n"
             "✨ Create temporary email instantly\n"
             "📧 Domain: @any.pink\n"
             "🔑 Auto-detect verification codes\n\n"
@@ -599,7 +599,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        await query.edit_message_text(welcome_message, parse_mode='Markdown', reply_markup=reply_markup)
+        await query.edit_message_text(welcome_message, reply_markup=reply_markup)
     
     elif data.startswith('domain_'):
         domain = data.replace('domain_', '')
@@ -633,10 +633,9 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup = InlineKeyboardMarkup(keyboard)
             
             await query.edit_message_text(
-                f"📭 *Inbox Empty*\n\n"
-                f"Email: `{email}`\n\n"
+                f"📭 Inbox Empty\n\n"
+                f"Email: {email}\n\n"
                 f"Waiting for emails...",
-                parse_mode='Markdown',
                 reply_markup=reply_markup
             )
             return
@@ -693,12 +692,12 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup = InlineKeyboardMarkup(keyboard)
             
             message = (
-                f"✅ *New Email Created!*\n\n"
-                f"📧 `{email}`\n\n"
+                f"✅ New Email Created!\n\n"
+                f"📧 {email}\n\n"
                 f"Ready to use!"
             )
             
-            await query.edit_message_text(message, parse_mode='Markdown', reply_markup=reply_markup)
+            await query.edit_message_text(message, reply_markup=reply_markup)
         else:
             await query.edit_message_text("❌ Failed! Try again.")
     
