@@ -345,8 +345,8 @@ async def check_inbox(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Show inbox
     keyboard = []
-    message = f"📬 *Inbox:* `{email}`\n\n"
-    message += f"📨 *{len(inbox)} email(s)*\n\n"
+    message = f"📬 Inbox: {email}\n\n"
+    message += f"📨 {len(inbox)} email(s) received\n\n"
     
     for idx, mail in enumerate(inbox[:10], 1):
         from_addr = mail.get('from_mail', 'Unknown')
@@ -357,8 +357,8 @@ async def check_inbox(update: Update, context: ContextTypes.DEFAULT_TYPE):
         codes = extract_codes(subject)
         code_indicator = " 🔑" if codes else ""
         
-        message += f"{idx}\\. *From:* {escape_markdown(from_addr)}\n"
-        message += f"   *Subject:* {escape_markdown(subject)}{code_indicator}\n\n"
+        message += f"{idx}. From: {from_addr}\n"
+        message += f"   Subject: {subject}{code_indicator}\n\n"
         
         keyboard.append([
             InlineKeyboardButton(
@@ -373,7 +373,7 @@ async def check_inbox(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ])
     
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await status_msg.edit_text(message, parse_mode='Markdown', reply_markup=reply_markup)
+    await status_msg.edit_text(message, reply_markup=reply_markup)
 
 
 async def extract_all_codes(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -421,20 +421,20 @@ async def extract_all_codes(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     
-    message = "🔑 *Verification Codes Found:*\n\n"
+    message = "🔑 Verification Codes Found:\n\n"
     
     for idx, item in enumerate(all_codes, 1):
-        message += f"*{idx}\\. From:* {escape_markdown(item['from'])}\n"
-        message += f"*Subject:* {escape_markdown(item['subject'])}\\.\\.\\.\n"
-        message += "*Codes:* "
+        message += f"{idx}. From: {item['from']}\n"
+        message += f"Subject: {item['subject']}...\n"
+        message += "Codes: "
         for code in item['codes']:
-            message += f"`{code}` "
+            message += f"{code} | "
         message += "\n\n"
     
     keyboard = [[InlineKeyboardButton("🔄 Refresh Codes", callback_data='extract_codes')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await status_msg.edit_text(message, parse_mode='Markdown', reply_markup=reply_markup)
+    await status_msg.edit_text(message, reply_markup=reply_markup)
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -498,17 +498,17 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_data[user_id] = {'pending_domain': domain}
         
         message = (
-            f"✅ Domain selected: `@{domain}`\n\n"
+            f"✅ Domain selected: @{domain}\n\n"
             f"Now send your desired username:\n\n"
-            f"*Rules:*\n"
+            f"📝 Rules:\n"
             f"• 3-20 characters\n"
             f"• Letters, numbers allowed\n"
             f"• Can use: . _ -\n"
             f"• No spaces\n\n"
-            f"*Example:* myemail123"
+            f"💡 Example: myemail123"
         )
         
-        await query.edit_message_text(message, parse_mode='Markdown')
+        await query.edit_message_text(message)
     
     elif data == 'check_inbox':
         if user_id not in user_data or 'email' not in user_data[user_id]:
@@ -535,8 +535,8 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         # Show inbox
         keyboard = []
-        message = f"📬 *Inbox:* `{email}`\n\n"
-        message += f"📨 *{len(inbox)} email(s)*\n\n"
+        message = f"📬 Inbox: {email}\n\n"
+        message += f"📨 {len(inbox)} email(s) received\n\n"
         
         for idx, mail in enumerate(inbox[:10], 1):
             from_addr = mail.get('from_mail', 'Unknown')
@@ -546,8 +546,8 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             codes = extract_codes(subject)
             code_indicator = " 🔑" if codes else ""
             
-            message += f"{idx}\\. *From:* {escape_markdown(from_addr)}\n"
-            message += f"   *Subject:* {escape_markdown(subject)}{code_indicator}\n\n"
+            message += f"{idx}. From: {from_addr}\n"
+            message += f"   Subject: {subject}{code_indicator}\n\n"
             
             keyboard.append([
                 InlineKeyboardButton(f"📖 Read #{idx}", callback_data=f'read_{mail_id}')
@@ -559,7 +559,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ])
         
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(message, parse_mode='Markdown', reply_markup=reply_markup)
+        await query.edit_message_text(message, reply_markup=reply_markup)
     
     elif data == 'random_email':
         import random
@@ -638,14 +638,14 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
         
-        message = "🔑 *Codes Found:*\n\n"
+        message = "🔑 Codes Found:\n\n"
         
         for idx, item in enumerate(all_codes, 1):
-            message += f"*{idx}. From:* {item['from']}\n"
-            message += f"*Subject:* {item['subject']}...\n"
-            message += "*Codes:* "
+            message += f"{idx}. From: {item['from']}\n"
+            message += f"Subject: {item['subject']}...\n"
+            message += "Codes: "
             for code in item['codes']:
-                message += f"`{code}` "
+                message += f"{code} | "
             message += "\n\n"
         
         keyboard = [
@@ -654,7 +654,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        await query.edit_message_text(message, parse_mode='Markdown', reply_markup=reply_markup)
+        await query.edit_message_text(message, reply_markup=reply_markup)
     
     elif data.startswith('read_'):
         mail_id = data.replace('read_', '')
@@ -684,20 +684,20 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         codes = extract_codes(f"{subject} {body}")
         
         # Truncate if too long
-        if len(body) > 2500:
-            body = body[:2500] + "\n\n... [Truncated]"
+        if len(body) > 2000:
+            body = body[:2000] + "\n\n... [Truncated]"
         
         message = (
-            f"📧 *Email Details*\n\n"
-            f"*From:* {from_addr}\n"
-            f"*Subject:* {subject}\n"
-            f"*Date:* {date}\n"
+            f"📧 Email Details\n\n"
+            f"From: {from_addr}\n"
+            f"Subject: {subject}\n"
+            f"Date: {date}\n"
         )
         
         if codes:
-            message += f"\n🔑 *Codes Detected:*\n"
+            message += f"\n🔑 Codes Detected:\n"
             for code in codes:
-                message += f"`{code}` "
+                message += f"{code} | "
             message += "\n"
         
         message += f"\n━━━━━━━━━━━━━\n\n{body}"
@@ -705,7 +705,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = [[InlineKeyboardButton("◀️ Back to Inbox", callback_data='check_inbox')]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        await query.edit_message_text(message, parse_mode='Markdown', reply_markup=reply_markup)
+        await query.edit_message_text(message, reply_markup=reply_markup)
 
 
 def main():
