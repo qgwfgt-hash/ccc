@@ -94,39 +94,17 @@ async def check_new_emails(context: ContextTypes.DEFAULT_TYPE):
                 
                 # Send notification
                 if codes:
-                    # Has codes - send MULTIPLE messages for each code (easier to copy)
-                    # First send main notification
-                    main_message = (
-                        f"🔔 NEW EMAIL WITH CODE!\n\n"
-                        f"📨 From: {from_addr}\n"
-                        f"📝 Subject: {subject[:50]}\n\n"
-                        f"🔑 {len(codes)} Code(s) Detected:\n"
-                        f"👇 Tap codes below to copy"
-                    )
+                    # Create a single comprehensive message with codes
+                    message = "🔔 NEW EMAIL WITH CODE!\n\n"
+                    message += "🔑 Codes Found:\n\n"
                     
-                    try:
-                        await context.bot.send_message(
-                            chat_id=user_id,
-                            text=main_message
-                        )
-                    except Exception as e:
-                        logger.error(f"Failed to send main notification: {e}")
+                    for idx, code in enumerate(codes[:5], 1):
+                        message += f"{idx}. From: {from_addr}\n"
+                        message += f"Subject: {subject[:30]}...\n"
+                        message += f"Codes: <code>{code}</code>  \n\n"
                     
-                    # Send each code separately for easy copying
-                    for idx, code in enumerate(codes[:5], 1):  # Max 5 codes
-                        code_message = f"🔑 Code #{idx}: <code>{code}</code>"
-                        try:
-                            await context.bot.send_message(
-                                chat_id=user_id,
-                                text=code_message,
-                                parse_mode='HTML'
-                            )
-                            # Small delay between messages
-                            await asyncio.sleep(0.3)
-                        except Exception as e:
-                            logger.error(f"Failed to send code: {e}")
+                    message += "📋 Tap any code to copy!"
                     
-                    # Finally send action buttons
                     keyboard = [
                         [InlineKeyboardButton("📖 Read Full Email", callback_data=f'read_{mail_id}')],
                         [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')]
@@ -136,11 +114,12 @@ async def check_new_emails(context: ContextTypes.DEFAULT_TYPE):
                     try:
                         await context.bot.send_message(
                             chat_id=user_id,
-                            text="📋 Tap any code above to copy!",
+                            text=message,
+                            parse_mode='HTML',
                             reply_markup=reply_markup
                         )
                     except Exception as e:
-                        logger.error(f"Failed to send buttons: {e}")
+                        logger.error(f"Failed to send notification: {e}")
                 else:
                     # No codes - simple notification
                     message = (
@@ -386,9 +365,13 @@ async def generate_random_email(update: Update, context: ContextTypes.DEFAULT_TY
         message = (
             f"✅ Email Created Successfully!\n\n"
             f"📧 Your Email:\n<code>{email}</code>\n\n"
-            f"📋 Tap email to copy\n"
-            f"📬 Check inbox using button below\n"
-            f"🔑 Codes will be auto-detected"
+            f"📋 Tap email to copy\n\n"
+            f"🔔 AUTO-NOTIFICATION ACTIVE!\n"
+            f"💡 When code arrives:\n"
+            f"   • Bot will send you directly\n"
+            f"   • No need to click anything\n"
+            f"   • Just tap code to copy\n\n"
+            f"⏱️ Checking every 15 seconds..."
         )
         
         # Start monitoring inbox for this user
@@ -599,9 +582,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             message = (
                 f"✅ Custom Email Created!\n\n"
                 f"📧 Your Email:\n<code>{email}</code>\n\n"
-                f"📋 Tap email to copy\n"
-                f"📬 Ready to receive emails\n"
-                f"🔔 You'll get notified when emails arrive!"
+                f"📋 Tap email to copy\n\n"
+                f"🔔 AUTO-NOTIFICATION ACTIVE!\n"
+                f"💡 When code arrives:\n"
+                f"   • Bot will send you directly\n"
+                f"   • No need to click anything\n"
+                f"   • Just tap code to copy\n\n"
+                f"⏱️ Checking every 15 seconds..."
             )
             
             # Start monitoring inbox for this user
@@ -825,8 +812,10 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             message = (
                 f"✅ New Email Created!\n\n"
                 f"📧 <code>{email}</code>\n\n"
-                f"📋 Tap to copy\n"
-                f"🔔 Notifications enabled!"
+                f"📋 Tap to copy\n\n"
+                f"🔔 AUTO-NOTIFICATION: ON\n"
+                f"⏱️ Checking every 15 seconds\n"
+                f"💡 Codes will be sent directly!"
             )
             
             # Start monitoring inbox for this user
@@ -976,7 +965,9 @@ def main():
     
     print("\n🚀 Starting bot...")
     print("✅ Bot is running! Press Ctrl+C to stop.")
-    print("🔔 Auto-notification enabled for new emails!")
+    print("🔔 Auto-notification: ENABLED")
+    print("⏱️  Checking emails every 15 seconds")
+    print("💡 Codes will be sent directly to users!")
     print("=" * 60)
     
     # Create application with job queue enabled
@@ -998,9 +989,10 @@ def main():
     application.add_handler(CallbackQueryHandler(button_callback))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
-    # Start background email monitoring (check every 30 seconds)
+    # Start background email monitoring (check every 15 seconds for faster detection)
     if application.job_queue:
-        application.job_queue.run_repeating(check_new_emails, interval=30, first=10)
+        application.job_queue.run_repeating(check_new_emails, interval=15, first=5)
+        print("🔔 Auto-notification: Checking emails every 15 seconds")
     else:
         print("⚠️ Job queue not available - auto-notification disabled")
     
