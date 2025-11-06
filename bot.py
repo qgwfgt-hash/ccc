@@ -64,20 +64,30 @@ class TempMailPlusAPI:
         try:
             # TempMail.plus domains (common ones)
             return [
+                'any.pink',
+                'cloudns.asia',
+                'cloudns.cc',
+                'cloudns.fun',
                 'tempmail.plus',
                 'mailto.plus',
+                'tmail.plus',
+                'fthcapital.com',
                 'bumbarash.com',
                 'easytrashmail.com',
-                'fthcapital.com',
                 'clipmail.eu',
-                'tmail.plus',
                 'disbox.org',
                 'mail.tm',
-                'guerrillamail.com'
+                'wxnw.net',
+                'yzm.de',
+                'popcornfarm.net',
+                'guerrillamail.com',
+                'grr.la',
+                'sharklasers.com',
+                '1secmail.com'
             ]
         except Exception as e:
             logger.error(f"Error getting domains: {e}")
-            return ['tempmail.plus', 'mailto.plus']
+            return ['any.pink', 'tempmail.plus', 'mailto.plus']
     
     def create_email(self, username, domain):
         """Create a new email address"""
@@ -236,13 +246,16 @@ async def create_custom_email(update: Update, context: ContextTypes.DEFAULT_TYPE
     domains = api.get_domains()
     keyboard = []
     
-    for domain in domains[:10]:  # Show first 10 domains
+    for domain in domains[:15]:  # Show first 15 domains
         keyboard.append([InlineKeyboardButton(f"@{domain}", callback_data=f"domain_{domain}")])
+    
+    keyboard.append([InlineKeyboardButton("◀️ Main Menu", callback_data='back_to_menu')])
     
     message = (
         "*🎨 Create Custom Email*\n\n"
         "Step 1: Choose a domain below\n"
         "Step 2: Send your desired username\n\n"
+        f"📋 {len(domains[:15])} domains available:\n"
         "Select domain:"
     )
     
@@ -509,7 +522,8 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         domains = api.get_domains()
         keyboard = []
         
-        for domain in domains[:10]:
+        # Show all domains (or first 15 if too many)
+        for domain in domains[:15]:
             keyboard.append([InlineKeyboardButton(f"@{domain}", callback_data=f"domain_{domain}")])
         
         keyboard.append([InlineKeyboardButton("◀️ Back to Menu", callback_data='back_to_menu')])
@@ -518,6 +532,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "🎨 *Create Custom Email*\n\n"
             "Step 1: Choose a domain below\n"
             "Step 2: Send your desired username\n\n"
+            f"📋 {len(domains[:15])} domains available:\n"
             "Select domain:"
         )
         
