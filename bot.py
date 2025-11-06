@@ -34,6 +34,8 @@ TEMPMAIL_API = "https://tempmail.plus/api"
 user_data = {}
 # Track last checked emails to detect new ones
 user_last_check = {}
+# Store multiple emails per user
+user_emails_list = {}  # {user_id: [email1, email2, email3, email4, email5]}
 
 
 def escape_markdown(text):
@@ -57,96 +59,101 @@ async def check_new_emails(context: ContextTypes.DEFAULT_TYPE):
         if 'email' not in data:
             continue
         
-        email = data['email']
+        # Get all emails for this user
+        all_user_emails = user_emails_list.get(user_id, [data['email']])
         
-        try:
-            inbox = api.get_inbox(email)
-        except Exception as e:
-            logger.error(f"Error getting inbox for {email}: {e}")
-            continue
-        
-        if not inbox:
-            continue
-        
-        # Get mail IDs we've already seen
-        seen_ids = user_last_check.get(user_id, [])
-        
-        # Check for new emails
-        for mail in inbox:
-            mail_id = mail.get('mail_id')
-            if mail_id in seen_ids:
+        # Check each email
+        for email in all_user_emails:
+            try:
+                inbox = api.get_inbox(email)
+            except Exception as e:
+                logger.error(f"Error getting inbox for {email}: {e}")
                 continue
             
-            # New email found!
-            subject = mail.get('subject', 'No Subject')
-            from_addr = mail.get('from_mail', 'Unknown')
+            if not inbox:
+                continue
             
-            # Check for codes
-            try:
-                full_mail = api.read_email(email, mail_id)
-            except Exception as e:
-                logger.error(f"Error reading email {mail_id}: {e}")
-                full_mail = None
+            # Get mail IDs we've already seen
+            seen_ids = user_last_check.get(user_id, [])
             
-            if full_mail:
-                body = full_mail.get('text', '') or full_mail.get('html', '')
-                codes = extract_codes(f"{subject} {body}")
+            # Check for new emails
+            for mail in inbox:
+                mail_id = mail.get('mail_id')
+                if mail_id in seen_ids:
+                    continue
                 
-                # Send notification
-                if codes:
-                    # Create a single comprehensive message with codes
-                    message = "🔔 NEW EMAIL WITH CODE!\n\n"
-                    message += "🔑 Codes Found:\n\n"
+                # New email found!
+                subject = mail.get('subject', 'No Subject')
+                from_addr = mail.get('from_mail', 'Unknown')
+                
+                # Check for codes
+                try:
+                    full_mail = api.read_email(email, mail_id)
+                except Exception as e:
+                    logger.error(f"Error reading email {mail_id}: {e}")
+                    full_mail = None
+                
+                if full_mail:
+                    body = full_mail.get('text', '') or full_mail.get('html', '')
+                    codes = extract_codes(f"{subject} {body}")
                     
-                    for idx, code in enumerate(codes[:5], 1):
-                        message += f"{idx}. From: {from_addr}\n"
-                        message += f"Subject: {subject[:30]}...\n"
-                        message += f"Codes: <code>{code}</code>  \n\n"
-                    
-                    message += "📋 Tap any code to copy!"
-                    
-                    keyboard = [
-                        [InlineKeyboardButton("📖 Read Full Email", callback_data=f'read_{mail_id}')],
-                        [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')]
-                    ]
-                    reply_markup = InlineKeyboardMarkup(keyboard)
-                    
-                    try:
-                        await context.bot.send_message(
-                            chat_id=user_id,
-                            text=message,
-                            parse_mode='HTML',
-                            reply_markup=reply_markup
+                    # Send notification
+                    if codes:
+                        # Create a single comprehensive message with codes
+                        message = "🔔 NEW EMAIL WITH CODE!\n\n"
+                        message += f"📧 To: {email}\n\n"
+                        message += "🔑 Codes Found:\n\n"
+                        
+                        for idx, code in enumerate(codes[:5], 1):
+                            message += f"{idx}. From: {from_addr}\n"
+                            message += f"Subject: {subject[:30]}...\n"
+                            message += f"Codes: <code>{code}</code>  \n\n"
+                        
+                        message += "📋 Tap any code to copy!"
+                        
+                        keyboard = [
+                            [InlineKeyboardButton("📖 Read Full Email", callback_data=f'read_{mail_id}')],
+                            [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')]
+                        ]
+                        reply_markup = InlineKeyboardMarkup(keyboard)
+                        
+                        try:
+                            await context.bot.send_message(
+                                chat_id=user_id,
+                                text=message,
+                                parse_mode='HTML',
+                                reply_markup=reply_markup
+                            )
+                        except Exception as e:
+                            logger.error(f"Failed to send notification: {e}")
+                    else:
+                        # No codes - simple notification
+                        message = (
+                            f"📧 New Email Received\n\n"
+                            f"📬 To: {email}\n"
+                            f"📨 From: {from_addr}\n"
+                            f"📝 Subject: {subject[:50]}"
                         )
-                    except Exception as e:
-                        logger.error(f"Failed to send notification: {e}")
-                else:
-                    # No codes - simple notification
-                    message = (
-                        f"📧 New Email Received\n\n"
-                        f"📨 From: {from_addr}\n"
-                        f"📝 Subject: {subject[:50]}"
-                    )
-                    
-                    keyboard = [
-                        [InlineKeyboardButton("📖 Read Email", callback_data=f'read_{mail_id}')],
-                        [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')]
-                    ]
-                    reply_markup = InlineKeyboardMarkup(keyboard)
-                    
-                    try:
-                        await context.bot.send_message(
-                            chat_id=user_id,
-                            text=message,
-                            reply_markup=reply_markup
-                        )
-                    except Exception as e:
-                        logger.error(f"Failed to send notification: {e}")
-            
-            # Mark as seen
-            if user_id not in user_last_check:
-                user_last_check[user_id] = []
-            user_last_check[user_id].append(mail_id)
+                        
+                        keyboard = [
+                            [InlineKeyboardButton("📖 Read Email", callback_data=f'read_{mail_id}')],
+                            [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')]
+                        ]
+                        reply_markup = InlineKeyboardMarkup(keyboard)
+                        
+                        try:
+                            await context.bot.send_message(
+                                chat_id=user_id,
+                                text=message,
+                                reply_markup=reply_markup
+                            )
+                        except Exception as e:
+                            logger.error(f"Failed to send notification: {e}")
+                
+                # Mark as seen
+                if user_id not in user_last_check:
+                    user_last_check[user_id] = []
+                user_last_check[user_id].append(mail_id)
 
 
 class TempMailPlusAPI:
@@ -432,22 +439,24 @@ async def show_current_email(update: Update, context: ContextTypes.DEFAULT_TYPE)
         )
         return
     
-    email = user_data[user_id]['email']
+    # Get all emails for this user
+    all_user_emails = user_emails_list.get(user_id, [user_data[user_id]['email']])
     
     keyboard = [
         [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')],
-        [InlineKeyboardButton("🔑 Extract Codes", callback_data='extract_codes')],
-        [InlineKeyboardButton("🔄 New Email", callback_data='create_email')],
+        [InlineKeyboardButton("🔑 Get All Codes", callback_data='extract_codes')],
+        [InlineKeyboardButton("🔄 Generate 5 More", callback_data='auto_generate')],
         [InlineKeyboardButton("◀️ Main Menu", callback_data='back_to_menu')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    message = (
-        f"📧 Your Current Email:\n\n"
-        f"<code>{email}</code>\n\n"
-        f"📋 Tap to copy\n"
-        f"✅ Active and ready to receive"
-    )
+    if len(all_user_emails) > 1:
+        message = f"📧 Your {len(all_user_emails)} Emails:\n\n"
+        for idx, email in enumerate(all_user_emails, 1):
+            message += f"{idx}. <code>{email}</code>\n"
+        message += f"\n📋 Tap any email to copy\n✅ All active and monitored"
+    else:
+        message = f"📧 Your Email:\n\n<code>{all_user_emails[0]}</code>\n\n📋 Tap to copy\n✅ Active and monitored"
     
     await update.message.reply_text(message, parse_mode='HTML', reply_markup=reply_markup)
 
@@ -513,54 +522,59 @@ async def check_inbox(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def extract_all_codes(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Extract all codes from inbox"""
+    """Extract all codes from all emails"""
     user_id = update.effective_user.id
     
     if user_id not in user_data or 'email' not in user_data[user_id]:
         await update.message.reply_text("❌ No email found!")
         return
     
-    email = user_data[user_id]['email']
-    status_msg = await update.message.reply_text("🔍 Extracting codes...")
+    # Get all emails for this user
+    all_user_emails = user_emails_list.get(user_id, [user_data[user_id]['email']])
     
-    inbox = api.get_inbox(email)
-    
-    if not inbox:
-        await status_msg.edit_text("📭 No emails found!")
-        return
+    status_msg = await update.message.reply_text(f"🔍 Checking {len(all_user_emails)} email(s) for codes...")
     
     all_codes = []
     
-    for mail in inbox:
-        subject = mail.get('subject', '')
-        mail_id = mail.get('mail_id')
+    # Check each email
+    for email in all_user_emails:
+        inbox = api.get_inbox(email)
         
-        # Get full email content
-        full_mail = api.read_email(email, mail_id)
-        if full_mail:
-            body = full_mail.get('text', '') or full_mail.get('html', '')
-            text = f"{subject} {body}"
-            codes = extract_codes(text)
+        if not inbox:
+            continue
+        
+        for mail in inbox:
+            subject = mail.get('subject', '')
+            mail_id = mail.get('mail_id')
+            from_addr = mail.get('from_mail', 'Unknown')
             
-            if codes:
-                from_addr = mail.get('from_mail', 'Unknown')
-                all_codes.append({
-                    'from': from_addr,
-                    'subject': subject[:30],
-                    'codes': codes
-                })
+            # Get full email content
+            full_mail = api.read_email(email, mail_id)
+            if full_mail:
+                body = full_mail.get('text', '') or full_mail.get('html', '')
+                text = f"{subject} {body}"
+                codes = extract_codes(text)
+                
+                if codes:
+                    all_codes.append({
+                        'email': email,
+                        'from': from_addr,
+                        'subject': subject[:30],
+                        'codes': codes
+                    })
     
     if not all_codes:
         await status_msg.edit_text(
-            "❌ No codes found in emails!\n\n"
+            "❌ No codes found in any emails!\n\n"
             "Codes will appear here when detected."
         )
         return
     
-    message = "🔑 Verification Codes Found:\n\n"
+    message = f"🔑 Codes Found ({len(all_codes)} emails):\n\n"
     
     for idx, item in enumerate(all_codes, 1):
-        message += f"{idx}. From: {item['from']}\n"
+        message += f"{idx}. 📧 {item['email']}\n"
+        message += f"From: {item['from']}\n"
         message += f"Subject: {item['subject']}...\n"
         message += "Codes: "
         for code in item['codes']:
@@ -668,31 +682,41 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(message, reply_markup=reply_markup)
     
     elif data.startswith('gen_'):
-        # Generate email with selected domain
+        # Generate 5 emails with selected domain
         domain = data.replace('gen_', '')
-        username = generate_cool_username()
         
-        await query.edit_message_text("⏳ Generating cool email...")
+        await query.edit_message_text("⏳ Generating 5 cool emails...")
         
-        email = api.create_email(username, domain)
+        generated_emails = []
+        for i in range(5):
+            username = generate_cool_username()
+            email = api.create_email(username, domain)
+            if email:
+                generated_emails.append(email)
+            await asyncio.sleep(0.2)  # Small delay between creations
         
-        if email:
-            user_data[user_id] = {'email': email, 'domain': domain}
+        if generated_emails:
+            # Save all emails
+            user_emails_list[user_id] = generated_emails
+            user_data[user_id] = {'email': generated_emails[0], 'domain': domain, 'all_emails': generated_emails}
             
             keyboard = [
                 [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')],
-                [InlineKeyboardButton("🔄 Generate Another", callback_data='auto_generate')],
+                [InlineKeyboardButton("🔑 Get All Codes", callback_data='extract_codes')],
+                [InlineKeyboardButton("🔄 Generate 5 More", callback_data='auto_generate')],
                 [InlineKeyboardButton("◀️ Main Menu", callback_data='back_to_menu')]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             
-            message = (
-                f"⚡ Auto-Generated Email!\n\n"
-                f"📧 <code>{email}</code>\n\n"
-                f"📋 Tap to copy\n\n"
+            message = f"⚡ 5 Emails Generated!\n\n"
+            for idx, email in enumerate(generated_emails, 1):
+                message += f"{idx}. <code>{email}</code>\n"
+            
+            message += (
+                f"\n📋 Tap any email to copy\n\n"
                 f"🔔 AUTO-NOTIFICATION: ON\n"
-                f"⏱️ Checking every 15 seconds\n"
-                f"💡 Codes will be sent directly!"
+                f"⏱️ Monitoring all 5 emails\n"
+                f"💡 Click 'Get All Codes' for all codes!"
             )
             
             # Start monitoring inbox for this user
