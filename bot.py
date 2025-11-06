@@ -299,7 +299,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("⚡ Auto Generate Email", callback_data='auto_generate')],
         [InlineKeyboardButton("🎨 Create Custom Email", callback_data='create_email')],
-        [InlineKeyboardButton("📬 Check My Inbox", callback_data='check_inbox')],
+        [InlineKeyboardButton("🔑 Get Codes", callback_data='extract_codes')],
         [InlineKeyboardButton("📧 Show My Email", callback_data='show_email')],
         [InlineKeyboardButton("❓ Help & Info", callback_data='show_help')]
     ]
@@ -810,7 +810,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = [
             [InlineKeyboardButton("⚡ Auto Generate Email", callback_data='auto_generate')],
             [InlineKeyboardButton("🎨 Create Custom Email", callback_data='create_email')],
-            [InlineKeyboardButton("📬 Check My Inbox", callback_data='check_inbox')],
+            [InlineKeyboardButton("🔑 Get Codes", callback_data='extract_codes')],
             [InlineKeyboardButton("📧 Show My Email", callback_data='show_email')],
             [InlineKeyboardButton("❓ Help & Info", callback_data='show_help')]
         ]
