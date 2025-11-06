@@ -299,7 +299,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("⚡ Auto Generate Email", callback_data='auto_generate')],
         [InlineKeyboardButton("🎨 Create Custom Email", callback_data='create_email')],
-        [InlineKeyboardButton("🔑 Get Codes", callback_data='extract_codes')],
+        [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')],
         [InlineKeyboardButton("📧 Show My Email", callback_data='show_email')],
         [InlineKeyboardButton("❓ Help & Info", callback_data='show_help')]
     ]
@@ -504,10 +504,8 @@ async def check_inbox(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         ])
     
-    keyboard.append([
-        InlineKeyboardButton("🔄 Refresh", callback_data='check_inbox'),
-        InlineKeyboardButton("🔑 Get Codes", callback_data='extract_codes')
-    ])
+    keyboard.append([InlineKeyboardButton("🔑 Get Codes", callback_data='extract_codes')])
+    keyboard.append([InlineKeyboardButton("🔄 Refresh Inbox", callback_data='check_inbox')])
     keyboard.append([InlineKeyboardButton("◀️ Main Menu", callback_data='back_to_menu')])
     
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -810,7 +808,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = [
             [InlineKeyboardButton("⚡ Auto Generate Email", callback_data='auto_generate')],
             [InlineKeyboardButton("🎨 Create Custom Email", callback_data='create_email')],
-            [InlineKeyboardButton("🔑 Get Codes", callback_data='extract_codes')],
+            [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')],
             [InlineKeyboardButton("📧 Show My Email", callback_data='show_email')],
             [InlineKeyboardButton("❓ Help & Info", callback_data='show_help')]
         ]
@@ -881,10 +879,8 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 InlineKeyboardButton(f"📖 Read #{idx}", callback_data=f'read_{mail_id}')
             ])
         
-        keyboard.append([
-            InlineKeyboardButton("🔄 Refresh", callback_data='check_inbox'),
-            InlineKeyboardButton("🔑 Get Codes", callback_data='extract_codes')
-        ])
+        keyboard.append([InlineKeyboardButton("🔑 Get Codes", callback_data='extract_codes')])
+        keyboard.append([InlineKeyboardButton("🔄 Refresh Inbox", callback_data='check_inbox')])
         keyboard.append([InlineKeyboardButton("◀️ Main Menu", callback_data='back_to_menu')])
         
         reply_markup = InlineKeyboardMarkup(keyboard)
