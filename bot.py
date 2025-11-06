@@ -286,22 +286,26 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     
     welcome_message = (
-        "🎉 Welcome to Temp Mail Bot!\n\n"
+        "🎉 *Welcome to Temp Mail Bot!*\n\n"
         "✨ Create temporary email instantly\n"
-        "📧 Domains: @any.pink, @mailto.plus\n"
-        "🔑 Auto-detect verification codes\n\n"
-        "👇 Choose an option:"
+        "📧 Domains: @any\\.pink, @mailto\\.plus\n"
+        "🔑 Auto\\-detect verification codes\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "*📬 MAIN MENU*\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "Choose an option below:"
     )
     
     keyboard = [
-        [InlineKeyboardButton("⚡ Auto Generate", callback_data='auto_generate')],
-        [InlineKeyboardButton("🎨 Create Custom", callback_data='create_email')],
-        [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')],
-        [InlineKeyboardButton("📧 My Email", callback_data='show_email')]
+        [InlineKeyboardButton("⚡ Auto Generate Email", callback_data='auto_generate')],
+        [InlineKeyboardButton("🎨 Create Custom Email", callback_data='create_email')],
+        [InlineKeyboardButton("📬 Check My Inbox", callback_data='check_inbox')],
+        [InlineKeyboardButton("📧 Show My Email", callback_data='show_email')],
+        [InlineKeyboardButton("❓ Help & Info", callback_data='show_help')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await update.message.reply_text(welcome_message, reply_markup=reply_markup)
+    await update.message.reply_text(welcome_message, parse_mode='MarkdownV2', reply_markup=reply_markup)
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -793,22 +797,26 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == 'back_to_menu':
         # Back to main menu
         welcome_message = (
-            "🎉 Welcome to Temp Mail Bot!\n\n"
+            "🎉 *Welcome to Temp Mail Bot!*\n\n"
             "✨ Create temporary email instantly\n"
-            "📧 Domains: @any.pink, @mailto.plus\n"
-            "🔑 Auto-detect verification codes\n\n"
-            "👇 Choose an option:"
+            "📧 Domains: @any\\.pink, @mailto\\.plus\n"
+            "🔑 Auto\\-detect verification codes\n\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            "*📬 MAIN MENU*\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            "Choose an option below:"
         )
         
         keyboard = [
-            [InlineKeyboardButton("⚡ Auto Generate", callback_data='auto_generate')],
-            [InlineKeyboardButton("🎨 Create Custom", callback_data='create_email')],
-            [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')],
-            [InlineKeyboardButton("📧 My Email", callback_data='show_email')]
+            [InlineKeyboardButton("⚡ Auto Generate Email", callback_data='auto_generate')],
+            [InlineKeyboardButton("🎨 Create Custom Email", callback_data='create_email')],
+            [InlineKeyboardButton("📬 Check My Inbox", callback_data='check_inbox')],
+            [InlineKeyboardButton("📧 Show My Email", callback_data='show_email')],
+            [InlineKeyboardButton("❓ Help & Info", callback_data='show_help')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        await query.edit_message_text(welcome_message, reply_markup=reply_markup)
+        await query.edit_message_text(welcome_message, parse_mode='MarkdownV2', reply_markup=reply_markup)
     
     elif data.startswith('domain_'):
         domain = data.replace('domain_', '')
