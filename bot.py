@@ -9,7 +9,9 @@ import logging
 import re
 import requests
 import json
+import os
 from datetime import datetime
+from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application,
@@ -19,6 +21,9 @@ from telegram.ext import (
     filters,
     ContextTypes,
 )
+
+# Load environment variables
+load_dotenv()
 
 # Enable logging
 logging.basicConfig(
@@ -32,6 +37,8 @@ TEMPMAIL_API = "https://tempmail.plus/api"
 
 # User data storage
 user_data = {}
+# Track last checked emails to detect new ones
+user_last_check = {}
 
 
 def escape_markdown(text):
@@ -47,6 +54,94 @@ def escape_markdown(text):
         text = text.replace(char, f'\\{char}')
     
     return text
+
+
+async def check_new_emails(context: ContextTypes.DEFAULT_TYPE):
+    """Background task to check for new emails and codes"""
+    for user_id, data in list(user_data.items()):
+        if 'email' not in data:
+            continue
+        
+        email = data['email']
+        inbox = api.get_inbox(email)
+        
+        if not inbox:
+            continue
+        
+        # Get mail IDs we've already seen
+        seen_ids = user_last_check.get(user_id, [])
+        
+        # Check for new emails
+        for mail in inbox:
+            mail_id = mail.get('mail_id')
+            if mail_id in seen_ids:
+                continue
+            
+            # New email found!
+            subject = mail.get('subject', 'No Subject')
+            from_addr = mail.get('from_mail', 'Unknown')
+            
+            # Check for codes
+            full_mail = api.read_email(email, mail_id)
+            if full_mail:
+                body = full_mail.get('text', '') or full_mail.get('html', '')
+                codes = extract_codes(f"{subject} {body}")
+                
+                # Send notification
+                if codes:
+                    # Has codes - send with copy button
+                    code_text = " | ".join(codes[:3])  # First 3 codes
+                    message = (
+                        f"🔔 New Email with Code!\n\n"
+                        f"From: {from_addr}\n"
+                        f"Subject: {subject[:40]}\n\n"
+                        f"🔑 Codes Found:\n"
+                        f"<code>{code_text}</code>\n\n"
+                        f"📋 Tap to copy"
+                    )
+                    
+                    keyboard = [
+                        [InlineKeyboardButton("📖 Read Full Email", callback_data=f'read_{mail_id}')],
+                        [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')]
+                    ]
+                    reply_markup = InlineKeyboardMarkup(keyboard)
+                    
+                    try:
+                        await context.bot.send_message(
+                            chat_id=user_id,
+                            text=message,
+                            parse_mode='HTML',
+                            reply_markup=reply_markup
+                        )
+                    except Exception as e:
+                        logger.error(f"Failed to send notification: {e}")
+                else:
+                    # No codes - simple notification
+                    message = (
+                        f"📧 New Email Received!\n\n"
+                        f"From: {from_addr}\n"
+                        f"Subject: {subject[:50]}"
+                    )
+                    
+                    keyboard = [
+                        [InlineKeyboardButton("📖 Read Email", callback_data=f'read_{mail_id}')],
+                        [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')]
+                    ]
+                    reply_markup = InlineKeyboardMarkup(keyboard)
+                    
+                    try:
+                        await context.bot.send_message(
+                            chat_id=user_id,
+                            text=message,
+                            reply_markup=reply_markup
+                        )
+                    except Exception as e:
+                        logger.error(f"Failed to send notification: {e}")
+            
+            # Mark as seen
+            if user_id not in user_last_check:
+                user_last_check[user_id] = []
+            user_last_check[user_id].append(mail_id)
 
 
 class TempMailPlusAPI:
@@ -264,13 +359,16 @@ async def generate_random_email(update: Update, context: ContextTypes.DEFAULT_TY
         
         message = (
             f"✅ Email Created Successfully!\n\n"
-            f"📧 Your Email:\n{email}\n\n"
-            f"📋 Tap to copy\n"
+            f"📧 Your Email:\n<code>{email}</code>\n\n"
+            f"📋 Tap email to copy\n"
             f"📬 Check inbox using button below\n"
             f"🔑 Codes will be auto-detected"
         )
         
-        await status_msg.edit_text(message, reply_markup=reply_markup)
+        # Start monitoring inbox for this user
+        user_last_check[user_id] = []
+        
+        await status_msg.edit_text(message, parse_mode='HTML', reply_markup=reply_markup)
     else:
         await status_msg.edit_text("❌ Failed to create email. Try again!")
 
@@ -298,11 +396,12 @@ async def show_current_email(update: Update, context: ContextTypes.DEFAULT_TYPE)
     
     message = (
         f"📧 Your Current Email:\n\n"
-        f"{email}\n\n"
+        f"<code>{email}</code>\n\n"
+        f"📋 Tap to copy\n"
         f"✅ Active and ready to receive"
     )
     
-    await update.message.reply_text(message, reply_markup=reply_markup)
+    await update.message.reply_text(message, parse_mode='HTML', reply_markup=reply_markup)
 
 
 async def check_inbox(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -419,8 +518,10 @@ async def extract_all_codes(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message += f"Subject: {item['subject']}...\n"
         message += "Codes: "
         for code in item['codes']:
-            message += f"{code} | "
+            message += f"<code>{code}</code>  "
         message += "\n\n"
+    
+    message += "📋 Tap any code to copy!"
     
     keyboard = [
         [InlineKeyboardButton("🔄 Refresh Codes", callback_data='extract_codes')],
@@ -429,7 +530,7 @@ async def extract_all_codes(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await status_msg.edit_text(message, reply_markup=reply_markup)
+    await status_msg.edit_text(message, parse_mode='HTML', reply_markup=reply_markup)
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -471,12 +572,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             
             message = (
                 f"✅ Custom Email Created!\n\n"
-                f"📧 Your Email:\n{email}\n\n"
-                f"📋 Tap to copy\n"
-                f"📬 Ready to receive emails"
+                f"📧 Your Email:\n<code>{email}</code>\n\n"
+                f"📋 Tap email to copy\n"
+                f"📬 Ready to receive emails\n"
+                f"🔔 You'll get notified when emails arrive!"
             )
             
-            await status_msg.edit_text(message, reply_markup=reply_markup)
+            # Start monitoring inbox for this user
+            user_last_check[user_id] = []
+            
+            await status_msg.edit_text(message, parse_mode='HTML', reply_markup=reply_markup)
         else:
             await status_msg.edit_text("❌ Failed to create email. Try different username!")
 
@@ -536,8 +641,8 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        message = f"📧 Your Current Email:\n\n{email}\n\n✅ Active and ready to receive"
-        await query.edit_message_text(message, reply_markup=reply_markup)
+        message = f"📧 Your Current Email:\n\n<code>{email}</code>\n\n📋 Tap to copy\n✅ Active and ready to receive"
+        await query.edit_message_text(message, parse_mode='HTML', reply_markup=reply_markup)
     
     elif data == 'show_domains':
         # Show available domains
@@ -693,11 +798,15 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             
             message = (
                 f"✅ New Email Created!\n\n"
-                f"📧 {email}\n\n"
-                f"Ready to use!"
+                f"📧 <code>{email}</code>\n\n"
+                f"📋 Tap to copy\n"
+                f"🔔 Notifications enabled!"
             )
             
-            await query.edit_message_text(message, reply_markup=reply_markup)
+            # Start monitoring inbox for this user
+            user_last_check[user_id] = []
+            
+            await query.edit_message_text(message, parse_mode='HTML', reply_markup=reply_markup)
         else:
             await query.edit_message_text("❌ Failed! Try again.")
     
@@ -753,8 +862,10 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             message += f"Subject: {item['subject']}...\n"
             message += "Codes: "
             for code in item['codes']:
-                message += f"{code} | "
+                message += f"<code>{code}</code>  "
             message += "\n\n"
+        
+        message += "📋 Tap any code to copy!"
         
         keyboard = [
             [InlineKeyboardButton("🔄 Refresh", callback_data='extract_codes')],
@@ -763,7 +874,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        await query.edit_message_text(message, reply_markup=reply_markup)
+        await query.edit_message_text(message, parse_mode='HTML', reply_markup=reply_markup)
     
     elif data.startswith('read_'):
         mail_id = data.replace('read_', '')
@@ -806,8 +917,8 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if codes:
             message += f"\n🔑 Codes Detected:\n"
             for code in codes:
-                message += f"{code} | "
-            message += "\n"
+                message += f"<code>{code}</code>  "
+            message += f"\n📋 Tap to copy\n"
         
         message += f"\n━━━━━━━━━━━━━\n\n{body}"
         
@@ -817,7 +928,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        await query.edit_message_text(message, reply_markup=reply_markup)
+        await query.edit_message_text(message, parse_mode='HTML', reply_markup=reply_markup)
 
 
 def main():
@@ -825,20 +936,36 @@ def main():
     print("=" * 60)
     print("  TELEGRAM TEMP MAIL BOT - POWERED BY TEMPMAIL.PLUS")
     print("=" * 60)
-    print("\n🔧 Setup Instructions:")
-    print("1. Get bot token from @BotFather on Telegram")
-    print("2. Send /newbot to @BotFather")
-    print("3. Follow instructions and copy the token")
-    print("=" * 60)
     
-    token = input("\n🔑 Enter your bot token: ").strip()
+    # Try to load token from .env file
+    token = os.getenv('BOT_TOKEN')
     
-    if not token:
-        print("❌ No token provided!")
-        return
+    if not token or token == 'YOUR_BOT_TOKEN_HERE':
+        print("\n🔧 Setup Instructions:")
+        print("1. Get bot token from @BotFather on Telegram")
+        print("2. Send /newbot to @BotFather")
+        print("3. Follow instructions and copy the token")
+        print("=" * 60)
+        
+        token = input("\n🔑 Enter your bot token: ").strip()
+        
+        if not token:
+            print("❌ No token provided!")
+            return
+        
+        # Save to .env file
+        with open('.env', 'w') as f:
+            f.write(f"# Telegram Bot Token\n")
+            f.write(f"# Get from @BotFather\n")
+            f.write(f"BOT_TOKEN={token}\n")
+        print("✅ Token saved to .env file!")
+    else:
+        print(f"✅ Loaded token from .env file")
     
     print("\n🚀 Starting bot...")
-    print("✅ Bot is running! Press Ctrl+C to stop.\n")
+    print("✅ Bot is running! Press Ctrl+C to stop.")
+    print("🔔 Auto-notification enabled for new emails!")
+    print("=" * 60)
     
     # Create application
     application = Application.builder().token(token).build()
@@ -854,6 +981,10 @@ def main():
     application.add_handler(CommandHandler("domains", show_domains))
     application.add_handler(CallbackQueryHandler(button_callback))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    
+    # Start background email monitoring (check every 30 seconds)
+    job_queue = application.job_queue
+    job_queue.run_repeating(check_new_emails, interval=30, first=10)
     
     # Run bot
     application.run_polling(allowed_updates=Update.ALL_TYPES)
