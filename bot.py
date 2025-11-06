@@ -948,8 +948,12 @@ def main():
     print("🔔 Auto-notification enabled for new emails!")
     print("=" * 60)
     
-    # Create application
-    application = Application.builder().token(token).build()
+    # Create application with job queue enabled
+    application = (
+        Application.builder()
+        .token(token)
+        .build()
+    )
     
     # Register handlers
     application.add_handler(CommandHandler("start", start))
@@ -964,8 +968,10 @@ def main():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
     # Start background email monitoring (check every 30 seconds)
-    job_queue = application.job_queue
-    job_queue.run_repeating(check_new_emails, interval=30, first=10)
+    if application.job_queue:
+        application.job_queue.run_repeating(check_new_emails, interval=30, first=10)
+    else:
+        print("⚠️ Job queue not available - auto-notification disabled")
     
     # Run bot
     application.run_polling(allowed_updates=Update.ALL_TYPES)
