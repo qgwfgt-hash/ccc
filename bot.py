@@ -162,11 +162,11 @@ class TempMailPlusAPI:
     def get_domains(self):
         """Get available domains"""
         try:
-            # Only any.pink domain
-            return ['any.pink']
+            # Two main domains
+            return ['any.pink', 'mailto.plus']
         except Exception as e:
             logger.error(f"Error getting domains: {e}")
-            return ['any.pink']
+            return ['any.pink', 'mailto.plus']
     
     def create_email(self, username, domain):
         """Create a new email address"""
@@ -245,6 +245,42 @@ def extract_codes(text):
     return unique_codes[:5]  # Return max 5 codes
 
 
+def generate_cool_username():
+    """Generate a cool, readable username"""
+    import random
+    
+    # Cool prefixes
+    prefixes = [
+        'sunxe', 'cyber', 'pixel', 'ninja', 'alpha', 'mega', 'super', 'hyper',
+        'turbo', 'crypto', 'neon', 'laser', 'galaxy', 'cosmic', 'stellar',
+        'quantum', 'phantom', 'shadow', 'thunder', 'blaze', 'storm', 'frost',
+        'sonic', 'ultra', 'prime', 'nexus', 'vertex', 'zenith', 'apex'
+    ]
+    
+    # Cool suffixes
+    suffixes = [
+        'pro', 'dev', 'tech', 'hub', 'lab', 'zone', 'net', 'web', 'app',
+        'code', 'byte', 'bit', 'core', 'wave', 'edge', 'link', 'node',
+        'user', 'gen', 'max', 'one', 'zero', 'x', 'z', 'star', 'king'
+    ]
+    
+    # Generate username
+    prefix = random.choice(prefixes)
+    suffix = random.choice(suffixes)
+    number = random.randint(10, 99)
+    
+    # Random format
+    formats = [
+        f"{prefix}{number}",
+        f"{prefix}{suffix}",
+        f"{prefix}{suffix}{number}",
+        f"{prefix}_{suffix}",
+        f"{prefix}.{suffix}"
+    ]
+    
+    return random.choice(formats)
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Start command"""
     user_id = update.effective_user.id
@@ -252,16 +288,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     welcome_message = (
         "🎉 Welcome to Temp Mail Bot!\n\n"
         "✨ Create temporary email instantly\n"
-        "📧 Domain: @any.pink\n"
+        "📧 Domains: @any.pink, @mailto.plus\n"
         "🔑 Auto-detect verification codes\n\n"
         "👇 Choose an option:"
     )
     
     keyboard = [
-        [InlineKeyboardButton("🎨 Create Email", callback_data='create_email')],
+        [InlineKeyboardButton("⚡ Auto Generate", callback_data='auto_generate')],
+        [InlineKeyboardButton("🎨 Create Custom", callback_data='create_email')],
         [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')],
-        [InlineKeyboardButton("📧 My Email", callback_data='show_email')],
-        [InlineKeyboardButton("🔑 Get Codes", callback_data='extract_codes')]
+        [InlineKeyboardButton("📧 My Email", callback_data='show_email')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
@@ -315,23 +351,22 @@ async def create_custom_email(update: Update, context: ContextTypes.DEFAULT_TYPE
     """Start custom email creation"""
     user_id = update.effective_user.id
     
-    # Directly set domain to any.pink
-    user_data[user_id] = {'pending_domain': 'any.pink'}
+    # Show domain selection
+    domains = api.get_domains()
+    keyboard = []
+    
+    for domain in domains:
+        keyboard.append([InlineKeyboardButton(f"@{domain}", callback_data=f"domain_{domain}")])
+    
+    keyboard.append([InlineKeyboardButton("◀️ Main Menu", callback_data='back_to_menu')]]
     
     message = (
-        "🎨 Create Your Email\n\n"
-        "📧 Domain: @any.pink\n\n"
-        "Now send your desired username:\n\n"
-        "📝 Rules:\n"
-        "• 3 to 20 characters\n"
-        "• Letters, numbers allowed\n"
-        "• Can use dots, underscores, dashes\n"
-        "• No spaces\n\n"
-        "💡 Example: myname123\n"
-        "Result: myname123@any.pink"
+        "🎨 Create Custom Email\n\n"
+        "Step 1: Choose domain\n"
+        "Step 2: Send your username\n\n"
+        "Select domain:"
     )
     
-    keyboard = [[InlineKeyboardButton("◀️ Main Menu", callback_data='back_to_menu')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(message, reply_markup=reply_markup)
 
@@ -607,26 +642,82 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     data = query.data
     
-    if data == 'create_email':
-        # Directly set domain to any.pink
-        user_data[user_id] = {'pending_domain': 'any.pink'}
+    if data == 'auto_generate':
+        # Auto generate cool email with domain selection
+        domains = api.get_domains()
+        keyboard = []
+        
+        for domain in domains:
+            keyboard.append([InlineKeyboardButton(f"⚡ Generate @{domain}", callback_data=f"gen_{domain}")])
+        
+        keyboard.append([InlineKeyboardButton("◀️ Back to Menu", callback_data='back_to_menu')])
         
         message = (
-            "🎨 Create Your Email\n\n"
-            "📧 Domain: @any.pink\n\n"
-            "Now send your desired username:\n\n"
-            "📝 Rules:\n"
-            "• 3 to 20 characters\n"
-            "• Letters, numbers allowed\n"
-            "• Can use dots, underscores, dashes\n"
-            "• No spaces\n\n"
-            "💡 Example: myname123\n"
-            "Result: myname123@any.pink"
+            "⚡ Auto Generate Email\n\n"
+            "Select domain for auto-generated email:\n\n"
+            "💡 Examples:\n"
+            "• sunxe@any.pink\n"
+            "• cyber45@mailto.plus\n"
+            "• ninja_pro@any.pink\n\n"
+            "Cool username will be generated automatically!"
         )
         
-        keyboard = [[InlineKeyboardButton("◀️ Back to Menu", callback_data='back_to_menu')]]
         reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(message, reply_markup=reply_markup)
+    
+    elif data.startswith('gen_'):
+        # Generate email with selected domain
+        domain = data.replace('gen_', '')
+        username = generate_cool_username()
         
+        await query.edit_message_text("⏳ Generating cool email...")
+        
+        email = api.create_email(username, domain)
+        
+        if email:
+            user_data[user_id] = {'email': email, 'domain': domain}
+            
+            keyboard = [
+                [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')],
+                [InlineKeyboardButton("🔄 Generate Another", callback_data='auto_generate')],
+                [InlineKeyboardButton("◀️ Main Menu", callback_data='back_to_menu')]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            message = (
+                f"⚡ Auto-Generated Email!\n\n"
+                f"📧 <code>{email}</code>\n\n"
+                f"📋 Tap to copy\n\n"
+                f"🔔 AUTO-NOTIFICATION: ON\n"
+                f"⏱️ Checking every 15 seconds\n"
+                f"💡 Codes will be sent directly!"
+            )
+            
+            # Start monitoring inbox for this user
+            user_last_check[user_id] = []
+            
+            await query.edit_message_text(message, parse_mode='HTML', reply_markup=reply_markup)
+        else:
+            await query.edit_message_text("❌ Failed! Try again.")
+    
+    elif data == 'create_email':
+        # Show domain selection for custom email
+        domains = api.get_domains()
+        keyboard = []
+        
+        for domain in domains:
+            keyboard.append([InlineKeyboardButton(f"@{domain}", callback_data=f"domain_{domain}")])
+        
+        keyboard.append([InlineKeyboardButton("◀️ Back to Menu", callback_data='back_to_menu')])
+        
+        message = (
+            "🎨 Create Custom Email\n\n"
+            "Step 1: Choose domain\n"
+            "Step 2: Send your username\n\n"
+            "Select domain:"
+        )
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(message, reply_markup=reply_markup)
     
     elif data == 'show_email':
@@ -704,16 +795,16 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         welcome_message = (
             "🎉 Welcome to Temp Mail Bot!\n\n"
             "✨ Create temporary email instantly\n"
-            "📧 Domain: @any.pink\n"
+            "📧 Domains: @any.pink, @mailto.plus\n"
             "🔑 Auto-detect verification codes\n\n"
             "👇 Choose an option:"
         )
         
         keyboard = [
-            [InlineKeyboardButton("🎨 Create Email", callback_data='create_email')],
+            [InlineKeyboardButton("⚡ Auto Generate", callback_data='auto_generate')],
+            [InlineKeyboardButton("🎨 Create Custom", callback_data='create_email')],
             [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')],
-            [InlineKeyboardButton("📧 My Email", callback_data='show_email')],
-            [InlineKeyboardButton("🔑 Get Codes", callback_data='extract_codes')]
+            [InlineKeyboardButton("📧 My Email", callback_data='show_email')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
@@ -731,10 +822,14 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"• Letters, numbers allowed\n"
             f"• Can use: . _ -\n"
             f"• No spaces\n\n"
-            f"💡 Example: myemail123"
+            f"💡 Example: myemail123\n"
+            f"Result: myemail123@{domain}"
         )
         
-        await query.edit_message_text(message)
+        keyboard = [[InlineKeyboardButton("◀️ Back", callback_data='create_email')]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(message, reply_markup=reply_markup)
     
     elif data == 'check_inbox':
         if user_id not in user_data or 'email' not in user_data[user_id]:
