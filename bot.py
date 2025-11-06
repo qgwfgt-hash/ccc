@@ -58,7 +58,12 @@ async def check_new_emails(context: ContextTypes.DEFAULT_TYPE):
             continue
         
         email = data['email']
-        inbox = api.get_inbox(email)
+        
+        try:
+            inbox = api.get_inbox(email)
+        except Exception as e:
+            logger.error(f"Error getting inbox for {email}: {e}")
+            continue
         
         if not inbox:
             continue
@@ -77,24 +82,51 @@ async def check_new_emails(context: ContextTypes.DEFAULT_TYPE):
             from_addr = mail.get('from_mail', 'Unknown')
             
             # Check for codes
-            full_mail = api.read_email(email, mail_id)
+            try:
+                full_mail = api.read_email(email, mail_id)
+            except Exception as e:
+                logger.error(f"Error reading email {mail_id}: {e}")
+                full_mail = None
+            
             if full_mail:
                 body = full_mail.get('text', '') or full_mail.get('html', '')
                 codes = extract_codes(f"{subject} {body}")
                 
                 # Send notification
                 if codes:
-                    # Has codes - send with copy button
-                    code_text = " | ".join(codes[:3])  # First 3 codes
-                    message = (
-                        f"🔔 New Email with Code!\n\n"
-                        f"From: {from_addr}\n"
-                        f"Subject: {subject[:40]}\n\n"
-                        f"🔑 Codes Found:\n"
-                        f"<code>{code_text}</code>\n\n"
-                        f"📋 Tap to copy"
+                    # Has codes - send MULTIPLE messages for each code (easier to copy)
+                    # First send main notification
+                    main_message = (
+                        f"🔔 NEW EMAIL WITH CODE!\n\n"
+                        f"📨 From: {from_addr}\n"
+                        f"📝 Subject: {subject[:50]}\n\n"
+                        f"🔑 {len(codes)} Code(s) Detected:\n"
+                        f"👇 Tap codes below to copy"
                     )
                     
+                    try:
+                        await context.bot.send_message(
+                            chat_id=user_id,
+                            text=main_message
+                        )
+                    except Exception as e:
+                        logger.error(f"Failed to send main notification: {e}")
+                    
+                    # Send each code separately for easy copying
+                    for idx, code in enumerate(codes[:5], 1):  # Max 5 codes
+                        code_message = f"🔑 Code #{idx}: <code>{code}</code>"
+                        try:
+                            await context.bot.send_message(
+                                chat_id=user_id,
+                                text=code_message,
+                                parse_mode='HTML'
+                            )
+                            # Small delay between messages
+                            await asyncio.sleep(0.3)
+                        except Exception as e:
+                            logger.error(f"Failed to send code: {e}")
+                    
+                    # Finally send action buttons
                     keyboard = [
                         [InlineKeyboardButton("📖 Read Full Email", callback_data=f'read_{mail_id}')],
                         [InlineKeyboardButton("📬 Check Inbox", callback_data='check_inbox')]
@@ -104,18 +136,17 @@ async def check_new_emails(context: ContextTypes.DEFAULT_TYPE):
                     try:
                         await context.bot.send_message(
                             chat_id=user_id,
-                            text=message,
-                            parse_mode='HTML',
+                            text="📋 Tap any code above to copy!",
                             reply_markup=reply_markup
                         )
                     except Exception as e:
-                        logger.error(f"Failed to send notification: {e}")
+                        logger.error(f"Failed to send buttons: {e}")
                 else:
                     # No codes - simple notification
                     message = (
-                        f"📧 New Email Received!\n\n"
-                        f"From: {from_addr}\n"
-                        f"Subject: {subject[:50]}"
+                        f"📧 New Email Received\n\n"
+                        f"📨 From: {from_addr}\n"
+                        f"📝 Subject: {subject[:50]}"
                     )
                     
                     keyboard = [
