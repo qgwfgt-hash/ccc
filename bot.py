@@ -362,7 +362,7 @@ async def create_custom_email(update: Update, context: ContextTypes.DEFAULT_TYPE
     for domain in domains:
         keyboard.append([InlineKeyboardButton(f"@{domain}", callback_data=f"domain_{domain}")])
     
-    keyboard.append([InlineKeyboardButton("◀️ Main Menu", callback_data='back_to_menu')]]
+    keyboard.append([InlineKeyboardButton("◀️ Main Menu", callback_data='back_to_menu')])
     
     message = (
         "🎨 Create Custom Email\n\n"
