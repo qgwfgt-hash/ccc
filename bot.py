@@ -286,12 +286,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     
     welcome_message = (
-        "🎉 *Welcome to Temp Mail Bot!*\n\n"
+        "🎉 Welcome to Temp Mail Bot!\n\n"
         "✨ Create temporary email instantly\n"
-        "📧 Domains: @any\\.pink, @mailto\\.plus\n"
-        "🔑 Auto\\-detect verification codes\n\n"
+        "📧 Domains: @any.pink, @mailto.plus\n"
+        "🔑 Auto-detect verification codes\n\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "*📬 MAIN MENU*\n"
+        "📬 MAIN MENU\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n\n"
         "Choose an option below:"
     )
@@ -305,7 +305,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await update.message.reply_text(welcome_message, parse_mode='MarkdownV2', reply_markup=reply_markup)
+    await update.message.reply_text(welcome_message, reply_markup=reply_markup)
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -797,12 +797,12 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == 'back_to_menu':
         # Back to main menu
         welcome_message = (
-            "🎉 *Welcome to Temp Mail Bot!*\n\n"
+            "🎉 Welcome to Temp Mail Bot!\n\n"
             "✨ Create temporary email instantly\n"
-            "📧 Domains: @any\\.pink, @mailto\\.plus\n"
-            "🔑 Auto\\-detect verification codes\n\n"
+            "📧 Domains: @any.pink, @mailto.plus\n"
+            "🔑 Auto-detect verification codes\n\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
-            "*📬 MAIN MENU*\n"
+            "📬 MAIN MENU\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n\n"
             "Choose an option below:"
         )
@@ -816,7 +816,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        await query.edit_message_text(welcome_message, parse_mode='MarkdownV2', reply_markup=reply_markup)
+        await query.edit_message_text(welcome_message, reply_markup=reply_markup)
     
     elif data.startswith('domain_'):
         domain = data.replace('domain_', '')
