@@ -34,6 +34,21 @@ TEMPMAIL_API = "https://tempmail.plus/api"
 user_data = {}
 
 
+def escape_markdown(text):
+    """Escape special characters for Telegram MarkdownV2"""
+    if not text:
+        return ""
+    
+    # Characters that need to be escaped in MarkdownV2
+    special_chars = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
+    
+    text = str(text)
+    for char in special_chars:
+        text = text.replace(char, f'\\{char}')
+    
+    return text
+
+
 class TempMailPlusAPI:
     """API wrapper for TempMail.plus"""
     
@@ -342,8 +357,8 @@ async def check_inbox(update: Update, context: ContextTypes.DEFAULT_TYPE):
         codes = extract_codes(subject)
         code_indicator = " 🔑" if codes else ""
         
-        message += f"{idx}. **From:** {from_addr}\n"
-        message += f"   **Subject:** {subject}{code_indicator}\n\n"
+        message += f"{idx}\\. *From:* {escape_markdown(from_addr)}\n"
+        message += f"   *Subject:* {escape_markdown(subject)}{code_indicator}\n\n"
         
         keyboard.append([
             InlineKeyboardButton(
@@ -409,8 +424,8 @@ async def extract_all_codes(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = "🔑 *Verification Codes Found:*\n\n"
     
     for idx, item in enumerate(all_codes, 1):
-        message += f"*{idx}. From:* {item['from']}\n"
-        message += f"*Subject:* {item['subject']}...\n"
+        message += f"*{idx}\\. From:* {escape_markdown(item['from'])}\n"
+        message += f"*Subject:* {escape_markdown(item['subject'])}\\.\\.\\.\n"
         message += "*Codes:* "
         for code in item['codes']:
             message += f"`{code}` "
@@ -531,8 +546,8 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             codes = extract_codes(subject)
             code_indicator = " 🔑" if codes else ""
             
-            message += f"{idx}. **From:** {from_addr}\n"
-            message += f"   **Subject:** {subject}{code_indicator}\n\n"
+            message += f"{idx}\\. *From:* {escape_markdown(from_addr)}\n"
+            message += f"   *Subject:* {escape_markdown(subject)}{code_indicator}\n\n"
             
             keyboard.append([
                 InlineKeyboardButton(f"📖 Read #{idx}", callback_data=f'read_{mail_id}')
